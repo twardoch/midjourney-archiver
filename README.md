@@ -1,41 +1,142 @@
 # Midjourney Archiver
 
-This is a command line tool to download/archive your whole
-Midjourney history (images + full prompts).
+This is a command-line tool to download and archive your Midjourney history, including images and full prompt metadata.
 
-### Alpha software warning
+## Features
 
-This is just a couple of Python scripts written in an afternoon to scratch my own itch. Here be dragons.
+*   Downloads job metadata (prompts, enqueue times, etc.) as JSON and plain text files.
+*   Downloads the actual images associated with your jobs.
+*   Interactive shell script (`mj-download.sh`) for easy setup and execution.
+*   Individual Python scripts (`mj-metadata-archiver.py`, `mj-downloader.py`) for more granular control.
+*   Configurable download options (job types, date ranges, overwrite behavior, etc.).
+*   Checks for existing files to avoid re-downloading (by default).
+*   Supports credentials via environment variables or interactive prompts.
 
 ## Installation
 
-1. Make sure you have Python 3.9 or newer.
-2. Download [the ZIP file](./archive/refs/heads/main.zip) and place it in a folder. In this folder, the tool will create an `mj-archive` subfolder, where it will place the downloaded items. 
-3. Unzip the downloaded ZIP file.
+1.  **Python:** Make sure you have Python 3.9 or newer installed and available in your system's PATH.
+2.  **Download:**
+    *   Clone this repository: `git clone https://github.com/your-repo-url/midjourney-archiver.git` (Replace with actual URL if available)
+    *   OR Download the source code ZIP and extract it to a folder.
+3.  **Dependencies:** Install the required Python package:
+    ```bash
+    pip install requests
+    # or
+    pip3 install requests
+    ```
+    The `mj-download.sh` script will also check for `requests` and remind you if it's missing.
 
 ## Usage
 
-### Mac or Linux
+There are two main ways to use the archiver:
 
-Run `mj-download.sh` and follow the instructions. These instructions are for a Chromium-based browser like Chrome or Edge. 
+### 1. Interactive Shell Script (Recommended for most users)
 
-1. Open https://www.midjourney.com/app/
-2. Sign in
-3. Open the browser developer tools: View > Developer > Developer Tools
-4. Go to Network > Fetch/XHR
-5. Find an entry like `?user_id=NNNNNNNN&public=false`
-6. Copy the `NNNNNNNN` value and paste it when asked, then press Enter.
-7. Go to Application > Cookies > https://www.midjourney.com
-8. Find the entry `__Secure-next-auth.session-token`
-9. Copy its value and paste it when asked, then press Enter. 
+This is the easiest way to get started, especially on Mac or Linux.
 
-### On Windows, or alternative on other platforms
+```bash
+./mj-download.sh
+```
 
-1. Get the `user_id` and `__Secure-next-auth.session-token` values as described above.
-2. Assign the value of `user_id` to the `MIDJOURNEY_USER_ID` environment variable.
-3. Assign the value of `__Secure-next-auth.session-token` to the `MIDJOURNEY_SESSION_TOKEN` environment variable.
-4. Crawl your history and download each job's metadata  as JSON file and text file with prompt: `./mj-metadata-archiver.py`
-5. Walk through that downloaded metadata archive and download the referenced images: `./mj-downloader.py`
+The script will:
+1.  Check for Python and the `requests` library.
+2.  Guide you through obtaining your Midjourney `User ID` and `Session Token` from your browser.
+3.  Ask if you want to use credentials found in environment variables (`MIDJOURNEY_USER_ID`, `MIDJOURNEY_SESSION_TOKEN`) if they are set.
+4.  Offer to customize various settings for the metadata archival and image downloading process (or use sensible defaults).
+5.  Run the metadata archiver.
+6.  Run the image downloader.
+
+Follow the on-screen instructions provided by the script.
+
+### 2. Manual Python Script Execution (Advanced)
+
+You can also run the Python scripts directly. This is useful if you are on Windows without a Bash environment, or if you want to automate parts of the process with specific parameters.
+
+**Step 1: Obtain Credentials**
+
+You'll need your Midjourney `User ID` and `__Secure-next-auth.session-token`. The `mj-download.sh` script provides detailed instructions for finding these. Briefly:
+
+1.  Open `https://www.midjourney.com/app/` in a Chromium-based browser (Chrome, Edge, etc.).
+2.  Sign in.
+3.  Open Developer Tools (F12).
+4.  **User ID:** Go to Network > Fetch/XHR. Find a request like `?user_id=YOUR_USER_ID...`. Copy the `YOUR_USER_ID` part.
+5.  **Session Token:** Go to Application > Cookies > `https://www.midjourney.com`. Find `__Secure-next-auth.session-token` and copy its value.
+
+You can provide these credentials to the scripts via:
+*   Environment variables: `MIDJOURNEY_USER_ID` and `MIDJOURNEY_SESSION_TOKEN`.
+*   Command-line arguments: `--user-id` and `--session-token`.
+*   Interactive prompts if neither of the above is found.
+
+**Step 2: Run the Metadata Archiver (`mj-metadata-archiver.py`)**
+
+This script crawls your Midjourney history and downloads job metadata.
+
+```bash
+python3 ./mj-metadata-archiver.py [OPTIONS]
+```
+
+**Common Options:**
+
+*   `--archive-root PATH`: Directory to store metadata (default: `./mj-archive`).
+*   `--user-id TEXT`: Your Midjourney User ID.
+*   `--session-token TEXT`: Your Midjourney session token.
+*   `--page-limit INTEGER`: Limit API pages to crawl (default: all).
+*   `--job-type TEXT`: Job type to fetch ('upscale', 'grid', 'all', 'None'; default: 'upscale').
+*   `--from-date TEXT`: Start date (YYYY-MM-DD HH:MM:SS.ffffff or YYYY-MM-DD).
+*   `--get-from-date-from-archive`: Set `--from-date` from latest in archive.
+*   `--overwrite-metadata`: Overwrite existing metadata files.
+*   `--json-indent INTEGER`: Indentation for JSON files (0 for compact; default: 2).
+*   `--log-level [DEBUG|INFO|WARNING|ERROR|CRITICAL]`: Logging verbosity (default: INFO).
+*   `--help`: Show help message.
+
+**Example:**
+
+```bash
+python3 ./mj-metadata-archiver.py --job-type all --get-from-date-from-archive
+```
+
+**Step 3: Run the Image Downloader (`mj-downloader.py`)**
+
+This script walks through the downloaded metadata and downloads the actual images.
+
+```bash
+python3 ./mj-downloader.py [OPTIONS]
+```
+
+**Common Options:**
+
+*   `--archive-root PATH`: Directory of the metadata archive (default: `./mj-archive`).
+*   `--job-types-to-download TEXT`: Comma-separated job types to download images for (e.g., 'upscale,grid', 'all'; default: 'upscale').
+*   `--log-level [DEBUG|INFO|WARNING|ERROR|CRITICAL]`: Logging verbosity (default: INFO).
+*   `--help`: Show help message.
+
+**Example:**
+
+```bash
+python3 ./mj-downloader.py --job-types-to-download "upscale,grid"
+```
+
+## Folder Structure
+
+The archiver will create a folder structure within your specified archive root (default `mj-archive/`):
+
+```
+mj-archive/
+└── YYYY/
+    └── YYYY-MM/
+        └── YYYY-MM-DD/
+            ├── YYYYMMDD-HHMMSS_jobid.json
+            ├── YYYYMMDD-HHMMSS_jobid.prompt.txt
+            ├── YYYYMMDD-HHMMSS_jobid.png
+            ├── YYYYMMDD-HHMMSS_jobid-1.png (if multiple images in job)
+            └── ...
+```
+
+## Disclaimer
+
+This tool interacts with the Midjourney website. Changes to their website or API could break this tool. Use at your own risk. Always respect Midjourney's Terms of Service.
+
+This is alpha software, developed to scratch a personal itch. While efforts have been made to make it robust, there might be bugs.
 
 ## License
 

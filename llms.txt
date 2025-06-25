@@ -1,0 +1,407 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+LICENSE.txt
+mj-download.sh
+mj-downloader.py
+mj-metadata-archiver.py
+README.md
+requirements.txt
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".gitignore">
+.idea/
+tmp*
+venv*
+mj-archive/
+</file>
+
+<file path="LICENSE.txt">
+MIT License
+
+Copyright (c) 2022 Stefaan Lippens
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</file>
+
+<file path="mj-download.sh">
+#!/usr/bin/env bash
+echo "These instructions are for a Chromium-based browser"
+echo "like Chrome or Edge:"
+echo "1. Open https://www.midjourney.com/app/"
+echo "2. Sign in"
+echo "3. Open the developer tools (F12)"
+echo "4. Go to Network > Fetch/XHR"
+echo "5. Find an entry like ?user_id=NNNNNNNN&public=false"
+echo "6. Copy the NNNNNNNN value and paste it below, then press Enter:"
+read MIDJOURNEY_USER_ID
+echo "7. Go to Application > Cookies > https://www.midjourney.com"
+echo "8. Find the entry __Secure-next-auth.session-token"
+echo "9. Copy its value and paste it below, then press Enter:"
+read -e MIDJOURNEY_SESSION_TOKEN
+echo "Thanks! Now downloading..."
+./mj-metadata-archiver.py
+./mj-downloader.py
+</file>
+
+<file path="mj-downloader.py">
+#!/usr/bin/env python
+"""
+Python command line tool to download images linked from
+Midjourney metadata archive
+"""
+import collections
+import json
+import logging
+from pathlib import Path
+
+import requests
+
+_log = logging.getLogger("mj-metadata-archiver")
+
+
+class MidjourneyDownloader:
+    def __init__(self):
+        self.stats = collections.Counter()
+
+    def walk_archive(self, archive_root: Path):
+        for job_info_path in archive_root.glob("**/*.json"):
+            _log.info(f"Processing {job_info_path}")
+            self.download_from_metadata_file(job_info_path)
+
+    def download_from_metadata_file(self, job_info_path: Path):
+        # TODO: try-except for json.loads
+        job_info = json.loads(job_info_path.read_text(encoding="utf8"))
+
+        if all(f in job_info for f in ["id", "type", "image_paths"]):
+            job_type = job_info["type"]
+            # TODO: option to decide which types/jobs to download?
+            if job_type == "upscale":
+                image_paths = job_info["image_paths"]
+                for i, image_url in enumerate(job_info["image_paths"]):
+                    extension = image_url.split(".")[-1].lower()
+                    if extension not in ["png", "jpg", "jpeg"]:
+                        raise ValueError(extension)
+                    image_index = "" if len(image_paths) == 1 else f"-{i + 1}"
+                    download_path = (
+                        job_info_path.parent
+                        / f"{job_info_path.stem}{image_index}.{extension}"
+                    )
+                    if download_path.exists():
+                        _log.info(f"Skipping, already exists: {download_path}")
+                        self.stats["skip already downloaded"] += 1
+                    else:
+                        self.download_url(image_url, download_path)
+                        self.stats["download"] += 1
+        else:
+            _log.warning(f"Skipping invalid metadata file {job_info_path}")
+            self.stats["skip invalid metadata"] += 1
+
+    def download_url(self, url: str, path: Path):
+        _log.info(f"Downloading {path} from {url}")
+        with requests.get(url, stream=True) as response:
+            response.raise_for_status()
+            with path.open("wb") as f:
+                for chunk in response.iter_content(chunk_size=None):
+                    f.write(chunk)
+        return path
+
+
+def main():
+    logging.basicConfig(level=logging.INFO)
+
+    # TODO: real CLI user interface
+    archive_root = Path.cwd() / "mj-archive"
+
+    downloader = MidjourneyDownloader()
+    try:
+        downloader.walk_archive(archive_root=archive_root)
+    except KeyboardInterrupt:
+        _log.info("Caught KeyboardInterrupt")
+    _log.info(f"Download stats: {downloader.stats}")
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="mj-metadata-archiver.py">
+#!/usr/bin/env python
+"""
+Python command line tool to download Midjourney job metadata:
+- text file with prompt used for each job
+- JSON dump with full job metadata listing
+"""
+
+import collections
+
+import datetime as dt
+import itertools
+import json
+import logging
+import os
+import textwrap
+from pathlib import Path
+from typing import List, Optional, Union
+
+import requests
+
+_log = logging.getLogger("mj-metadata-archiver")
+
+
+class MidjourneyMetadataArchiver:
+    _text_wrapper = textwrap.TextWrapper(
+        width=80,
+        initial_indent=" " * 4,
+        subsequent_indent=" " * 4,
+        break_long_words=False,
+        break_on_hyphens=False,
+    )
+
+    def __init__(self, archive_root: Path, user_id: str, session_token: str):
+        self.archive_root = archive_root
+        self.user_id = user_id
+        self.session_token = session_token
+        self.stats = collections.Counter()
+
+    def request_recent_jobs(
+        self,
+        job_type: Union[str, None] = "upscale",
+        from_date: Optional[dt.datetime] = None,
+        page: Optional[int] = None,
+        amount: int = 50,
+    ) -> List[dict]:
+        """
+        Do `recent-jobs` request to midjourney API
+        """
+        url = "https://www.midjourney.com/api/app/recent-jobs/"
+        params = {
+            "amount": amount,
+            "jobType": job_type,
+            "orderBy": "new",
+            "jobStatus": "completed",
+            "userId": self.user_id,
+            "dedupe": " true",
+            "refreshApi": 0,
+        }
+        if from_date:
+            params["fromDate"] = from_date
+        if page:
+            params["page"] = page
+        headers = {
+            "Cookie": f"__Secure-next-auth.session-token={self.session_token}",
+        }
+
+        _log.info(f"Requesting {url} with {params}")
+        resp = requests.get(url=url, params=params, headers=headers)
+        resp.raise_for_status()
+        assert resp.headers["Content-Type"].startswith("application/json")
+        job_listing = resp.json()
+        if (
+            isinstance(job_listing, list)
+            and len(job_listing) > 0
+            and isinstance(job_listing[0], dict)
+        ):
+            if all(f in job_listing[0] for f in ["id", "enqueue_time", "prompt"]):
+                _log.info(f"Got job listing with {len(job_listing)} jobs")
+                return job_listing
+            if job_listing[0] == {"msg": "No jobs found."}:
+                _log.info(f"Response: 'No jobs found'")
+                return []
+        raise ValueError(job_listing)
+
+    def crawl(
+        self,
+        limit: Optional[int] = None,
+        job_type: Union[str, None] = "upscale",
+        from_date: Optional[str] = None,
+    ):
+        """
+        Crawl the Midjourney API to collect job metadata
+        """
+        # TODO: option to get from_date from existing archive?
+        # TODO: there seems to be a hard limit of 2500 items in total job listing
+        pages = range(1, limit + 1) if limit else itertools.count(1)
+        for page in pages:
+            _log.info(f"Crawling for job info batch {page=}")
+            job_listing = self.request_recent_jobs(
+                from_date=from_date, page=page, job_type=job_type
+            )
+            if not job_listing:
+                _log.info("Empty job listing batch: reached end of total job listing")
+                break
+            self.archive_job_listing(job_listing)
+            # TODO: option to stop crawling if listing was already fully archived
+
+            # Get "fromDate" for consistent paging in next requests.
+            if from_date is None:
+                from_date = job_listing[0]["enqueue_time"]
+
+    def archive_job_listing(self, job_listing: List[dict]):
+        for job_info in job_listing:
+            self.archive_job_info(job_info)
+
+    def archive_job_info(self, job_info: dict):
+        job_id = job_info["id"]
+        enqueue_time = job_info["enqueue_time"]
+        _log.info(f"Archiving metadata of job {job_id} ({enqueue_time=})")
+
+        self.stats["job"] += 1
+        self.stats[f"job type={job_info['type']}"] += 1
+
+        enqueue_time = dt.datetime.strptime(enqueue_time, "%Y-%m-%d %H:%M:%S.%f")
+        job_dir = self.archive_root / enqueue_time.strftime("%Y/%Y-%m/%Y-%m-%d")
+        job_dir.mkdir(parents=True, exist_ok=True)
+        # Store raw metadata as JSON file
+        # TODO: option to not/force overwriting existing metadata files?
+        filename_base = f"{enqueue_time.strftime('%Y%m%d-%H%M%S')}_{job_id}"
+        with (job_dir / f"{filename_base}.json").open("w") as f:
+            # TODO: option to set indent/compactness?
+            json.dump(job_info, f, indent=2)
+        # Store prompt info as text file
+        with (job_dir / f"{filename_base}.prompt.txt").open("w") as f:
+            f.write("Prompt:\n")
+            f.write(self._text_wrapper.fill(job_info["prompt"]) + "\n")
+            f.write("\nFull command:\n")
+            f.write(self._text_wrapper.fill(job_info["full_command"]) + "\n")
+
+
+def main():
+    logging.basicConfig(level=logging.INFO)
+
+    # TODO: real CLI user interface
+    archive_root = Path.cwd() / "mj-archive"
+    user_id = os.environ.get("MIDJOURNEY_USER_ID") or input("user id:")
+    session_token = os.environ.get("MIDJOURNEY_SESSION_TOKEN") or input(
+        "session token:"
+    )
+
+    metadata_archiver = MidjourneyMetadataArchiver(
+        archive_root=archive_root, user_id=user_id, session_token=session_token
+    )
+    try:
+        metadata_archiver.crawl(
+            limit=10,
+            # limit=None,
+            # job_type=None,
+            job_type="upscale",
+        )
+    except KeyboardInterrupt:
+        _log.info("Caught KeyboardInterrupt")
+
+    _log.info(f"Crawling stats: {metadata_archiver.stats}")
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="README.md">
+# Midjourney Archiver
+
+This is a command line tool to download/archive your whole
+Midjourney history (images + full prompts).
+
+### Alpha software warning
+
+This is just a couple of Python scripts written in an afternoon to scratch my own itch. Here be dragons.
+
+## Installation
+
+1. Make sure you have Python 3.9 or newer.
+2. Download [the ZIP file](./archive/refs/heads/main.zip) and place it in a folder. In this folder, the tool will create an `mj-archive` subfolder, where it will place the downloaded items.
+3. Unzip the downloaded ZIP file.
+
+## Usage
+
+### Mac or Linux
+
+Run `mj-download.sh` and follow the instructions. These instructions are for a Chromium-based browser like Chrome or Edge.
+
+1. Open https://www.midjourney.com/app/
+2. Sign in
+3. Open the browser developer tools: View > Developer > Developer Tools
+4. Go to Network > Fetch/XHR
+5. Find an entry like `?user_id=NNNNNNNN&public=false`
+6. Copy the `NNNNNNNN` value and paste it when asked, then press Enter.
+7. Go to Application > Cookies > https://www.midjourney.com
+8. Find the entry `__Secure-next-auth.session-token`
+9. Copy its value and paste it when asked, then press Enter.
+
+### On Windows, or alternative on other platforms
+
+1. Get the `user_id` and `__Secure-next-auth.session-token` values as described above.
+2. Assign the value of `user_id` to the `MIDJOURNEY_USER_ID` environment variable.
+3. Assign the value of `__Secure-next-auth.session-token` to the `MIDJOURNEY_SESSION_TOKEN` environment variable.
+4. Crawl your history and download each job's metadata  as JSON file and text file with prompt: `./mj-metadata-archiver.py`
+5. Walk through that downloaded metadata archive and download the referenced images: `./mj-downloader.py`
+
+## License
+
+[MIT License](./LICENSE.txt)
+</file>
+
+<file path="requirements.txt">
+requests
+</file>
+
+</files>

@@ -3,7 +3,7 @@
 Python command line tool to download images linked from
 Midjourney metadata archive.
 """
-import argparse
+
 import collections
 import json
 import logging

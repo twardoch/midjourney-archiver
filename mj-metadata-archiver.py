@@ -14,7 +14,6 @@ import logging
 import os
 import textwrap
 from pathlib import Path
-from typing import List, Optional, Union
 
 import requests
 
@@ -39,11 +38,11 @@ class MidjourneyMetadataArchiver:
 
     def request_recent_jobs(
         self,
-        job_type: Union[str, None] = "upscale",
-        from_date: Optional[str] = None, # Changed from dt.datetime to str to match API and enqueue_time format
-        page: Optional[int] = None,
+        job_type: str | None = "upscale",
+        from_date: dt.datetime | None = None,
+        page: int | None = None,
         amount: int = 50,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Do `recent-jobs` request to midjourney API
         """
@@ -93,8 +92,8 @@ class MidjourneyMetadataArchiver:
             if isinstance(job_listing[0], dict) and all(f in job_listing[0] for f in ["id", "enqueue_time", "prompt"]):
                 _log.info(f"Got job listing with {len(job_listing)} jobs.")
                 return job_listing
-            if job_listing[0] == {"msg": "No jobs found."}: # Specific message for no jobs
-                _log.info("Response: 'No jobs found.'")
+            if job_listing[0] == {"msg": "No jobs found."}:
+                _log.info("Response: 'No jobs found'")
                 return []
 
         _log.warning(f"Unexpected job listing format: {job_listing}")
@@ -142,11 +141,9 @@ class MidjourneyMetadataArchiver:
 
     def crawl(
         self,
-        page_limit: Optional[int] = None, # Renamed from limit to page_limit for clarity
-        job_type: Union[str, None] = "upscale",
-        from_date: Optional[str] = None, # Expects string like "2023-10-26 18:19:40.038313"
-        get_from_date_from_archive: bool = False,
-        overwrite_metadata: bool = False,
+        limit: int | None = None,
+        job_type: str | None = "upscale",
+        from_date: str | None = None,
     ):
         """
         Crawl the Midjourney API to collect job metadata
@@ -192,9 +189,7 @@ class MidjourneyMetadataArchiver:
                 initial_from_date = job_listing[0]["enqueue_time"]
                 _log.info(f"Set initial_from_date for paging: {initial_from_date}")
 
-
-    def archive_job_listing(self, job_listing: List[dict], overwrite_metadata: bool) -> int:
-        archived_count = 0
+    def archive_job_listing(self, job_listing: list[dict]):
         for job_info in job_listing:
             if self.archive_job_info(job_info, overwrite_metadata):
                 archived_count += 1

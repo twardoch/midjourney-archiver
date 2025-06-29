@@ -1,76 +1,168 @@
 # TODO
 
-This file tracks specific tasks to be completed.
+## Immediate Priority (Week 1-2)
 
-## Phase 1: Core Functionality and Refinements
+### Project Structure
+- [ ] Create proper Python package structure under `src/midjourney_archiver/`
+- [ ] Split monolithic scripts into modules (api, core, cli, storage)
+- [ ] Create `__init__.py` files for all packages
+- [ ] Move existing scripts to legacy folder for reference
 
-### `mj-metadata-archiver.py`
-- [ ] Implement `argparse` for CLI arguments:
-    - [ ] `archive_root` (default: `./mj-archive`)
-    - [ ] `user_id` (prompt if not provided or in env/config)
-    - [ ] `session_token` (prompt if not provided or in env/config)
-    - [ ] `limit` (default: None, meaning crawl all)
-    - [ ] `job_type` (default: 'upscale', allow 'None' for all types)
-    - [ ] `from_date` (string, e.g., 'YYYY-MM-DD HH:MM:SS.ffffff' or 'YYYY-MM-DD')
-    - [ ] `get_from_date_from_archive` (boolean flag, default: False)
-    - [ ] `overwrite_metadata` (boolean flag, default: False)
-    - [ ] `json_indent` (integer, default: 2, 0 for compact)
-    - [ ] `log_level` (e.g., INFO, DEBUG)
-- [ ] Function to find the latest enqueue_time from existing archive if `get_from_date_from_archive` is true.
-- [ ] Modify `archive_job_info` to check `overwrite_metadata` before writing files.
-- [ ] Adjust `json.dump` indent based on `json_indent`.
-- [ ] Improve logging messages and consistency.
-- [ ] Gracefully handle API errors (e.g., invalid token, rate limits) with informative messages.
+### Code Quality
+- [ ] Add type hints to all functions in `mj-metadata-archiver.py`
+- [ ] Add type hints to all functions in `mj-downloader.py`
+- [ ] Replace os.path with pathlib throughout codebase
+- [ ] Add docstrings to all classes and functions
+- [ ] Create custom exception classes for better error handling
+- [ ] Implement proper logging with configurable levels
 
-### `mj-downloader.py`
-- [ ] Implement `argparse` for CLI arguments:
-    - [ ] `archive_root` (default: `./mj-archive`)
-    - [ ] `job_types_to_download` (comma-separated string, e.g., "upscale,grid", default: "upscale")
-    - [ ] `log_level` (e.g., INFO, DEBUG)
-- [ ] Add `try-except` block for `json.loads` in `download_from_metadata_file`.
-- [ ] Filter jobs to download based on `job_types_to_download`.
-- [ ] Improve logging messages and consistency.
+### Configuration System
+- [ ] Create `config.py` module for configuration management
+- [ ] Implement YAML-based configuration file support
+- [ ] Add configuration schema validation
+- [ ] Support config hierarchy (defaults → system → user → project → env → CLI)
+- [ ] Create example configuration file
 
-### `mj-download.sh`
-- [ ] Check for `MIDJOURNEY_USER_ID` and `MIDJOURNEY_SESSION_TOKEN` in environment variables first. If present, confirm with user if they want to use them or enter new ones.
-- [ ] Clarify instructions for finding User ID and Session Token, possibly with screenshots or more detailed steps.
-- [ ] Pass relevant arguments (like `archive_root`) to the Python scripts if they are also made configurable in the shell script.
+### Testing Infrastructure
+- [ ] Set up pytest framework
+- [ ] Create initial unit tests for core functions
+- [ ] Add GitHub Actions workflow for automated testing
+- [ ] Configure mypy for type checking
+- [ ] Set up pre-commit hooks
 
-### General
-- [ ] Create `CHANGELOG.md`.
-- [ ] Create a basic `config.ini` or `config.json` structure.
-    - [ ] Document how to use it in `README.md`.
-    - [ ] Add functionality to scripts to read defaults from config if it exists.
-- [ ] Update `README.md` with new CLI usage for both scripts.
-- [ ] Add more inline comments to explain complex logic.
-- [ ] Ensure `requirements.txt` is accurate.
-- [ ] Add a `.gitignore` entry for the configuration file if it contains sensitive info and is not meant to be committed.
+## Short Term Priority (Week 3-4)
 
-## Phase 2: Advanced Features
-- [ ] **Incremental Archiving (`mj-metadata-archiver.py`):**
-    - [ ] Store/retrieve last successful `enqueue_time` or job ID.
-    - [ ] Adjust `from_date` logic to use this for subsequent runs.
-- [ ] **Filtering/Searching:** (Further define scope)
-- [ ] **Rate Limiting/Retries:**
-    - [ ] Implement `time.sleep` after API requests.
-    - [ ] Add retry logic for `requests.get` with exponential backoff.
-- [ ] **Reporting/Stats:**
-    - [ ] More detailed breakdown of downloaded/skipped items.
+### API Client Refactoring
+- [ ] Create dedicated `api/client.py` module
+- [ ] Implement session management class
+- [ ] Add connection pooling
+- [ ] Implement retry logic with exponential backoff
+- [ ] Add rate limiting to prevent API throttling
+- [ ] Create Pydantic models for API responses
 
-## Phase 3: Packaging and Distribution
-- [ ] **Packaging:**
-    - [ ] Create `setup.py` or `pyproject.toml`.
-- [ ] **Testing:**
-    - [ ] Write unit tests for core functions (e.g., API request logic, metadata parsing).
+### Enhanced CLI
+- [ ] Migrate from argparse to Click framework
+- [ ] Implement subcommand structure (auth, archive, download, search, etc.)
+- [ ] Add interactive prompts for missing parameters
+- [ ] Implement progress bars with rich/tqdm
+- [ ] Add shell completion support
+- [ ] Create `--help` with examples for all commands
+
+### Error Handling
+- [ ] Implement comprehensive try-except blocks
+- [ ] Add specific error messages with suggestions
+- [ ] Create error recovery mechanisms
+- [ ] Add validation for all inputs
+- [ ] Implement graceful shutdown handling
+
+### Documentation
+- [ ] Update README.md with new package structure
+- [ ] Create detailed installation guide
+- [ ] Document all CLI commands with examples
+- [ ] Add troubleshooting guide
+- [ ] Create developer documentation
+
+## Medium Term Priority (Month 2-3)
+
+### Performance Improvements
+- [ ] Implement concurrent image downloading
+- [ ] Add async/await support for API calls
+- [ ] Create download queue management system
+- [ ] Implement resume capability for interrupted downloads
+- [ ] Add progress tracking for batch operations
+- [ ] Optimize file I/O operations
+
+### Database Integration
+- [ ] Design SQLite schema for metadata storage
+- [ ] Implement database initialization and migration
+- [ ] Create indexing for fast searches
+- [ ] Add full-text search on prompts
+- [ ] Implement query interface
+- [ ] Add export functionality (CSV, JSON)
+
+### Packaging and Distribution
+- [ ] Create `pyproject.toml` for modern Python packaging
+- [ ] Set up setuptools configuration
+- [ ] Create entry points for CLI commands
+- [ ] Build and test wheel distribution
+- [ ] Prepare for PyPI publication
+- [ ] Create GitHub release automation
+
+### Security Enhancements
+- [ ] Integrate keyring for secure credential storage
+- [ ] Add credential encryption options
+- [ ] Implement secure deletion of sensitive data
+- [ ] Add input sanitization
+- [ ] Create security documentation
+
+## Long Term Priority (Month 4-6)
+
+### Advanced Features
+- [ ] Implement duplicate detection using content hashing
+- [ ] Add image format conversion options
+- [ ] Create thumbnail generation
+- [ ] Implement EXIF metadata embedding
+- [ ] Add archive verification commands
+- [ ] Create HTML gallery export
+
+### Automation
+- [ ] Add cron job examples for scheduled archiving
+- [ ] Implement webhook notifications
+- [ ] Create Docker container
+- [ ] Add docker-compose configuration
+- [ ] Create systemd service files
+- [ ] Add Windows Task Scheduler integration
+
+### Cloud Storage Support
+- [ ] Add S3 backend support
+- [ ] Implement Google Cloud Storage integration
+- [ ] Add Azure Blob Storage support
+- [ ] Create abstraction layer for storage backends
+- [ ] Add sync functionality between local and cloud
+
+### Web Interface (Optional)
+- [ ] Design RESTful API for web access
+- [ ] Create basic Flask/FastAPI application
+- [ ] Implement gallery view
+- [ ] Add search functionality
+- [ ] Create download management interface
+- [ ] Add real-time progress updates
+
+## Continuous Tasks
+
+### Code Quality
+- [ ] Maintain > 80% test coverage
+- [ ] Regular dependency updates
+- [ ] Code review all changes
+- [ ] Update documentation with changes
+- [ ] Monitor and fix security vulnerabilities
+
+### Community
+- [ ] Respond to GitHub issues
+- [ ] Review and merge pull requests
+- [ ] Create contributing guidelines
+- [ ] Build example scripts and tutorials
+- [ ] Maintain changelog
+
+## Bug Fixes and Improvements
+
+### Known Issues
+- [ ] Fix hard-coded limit of 10 in main() function
+- [ ] Handle malformed JSON responses gracefully
+- [ ] Improve error messages for authentication failures
+- [ ] Fix potential path traversal vulnerabilities
+- [ ] Handle network interruptions during download
+
+### User Experience
+- [ ] Add verbose mode for debugging
+- [ ] Implement quiet mode for automation
+- [ ] Add dry-run option for testing
+- [ ] Create interactive setup wizard
+- [ ] Add command aliases for common operations
 
 ## Notes
-* Review hardcoded limit `limit=10` in `mj-metadata-archiver.py` `main()` and ensure it's driven by CLI/config.
-* Review `TODO` comments within the Python scripts and integrate them into this list or address them.
-    - `mj-downloader.py`: `TODO: option to decide which types/jobs to download?` (Covered)
-    - `mj-downloader.py`: `TODO: try-except for json.loads` (Covered)
-    - `mj-metadata-archiver.py`: `TODO: option to get from_date from existing archive?` (Covered)
-    - `mj-metadata-archiver.py`: `TODO: there seems to be a hard limit of 2500 items in total job listing` (Document this limitation)
-    - `mj-metadata-archiver.py`: `TODO: option to stop crawling if listing was already fully archived` (Related to incremental archiving)
-    - `mj-metadata-archiver.py`: `TODO: option to not/force overwriting existing metadata files?` (Covered)
-    - `mj-metadata-archiver.py`: `TODO: option to set indent/compactness?` (Covered)
-    - `mj-metadata-archiver.py` & `mj-downloader.py`: `TODO: real CLI user interface` (Covered by `argparse` implementation)
+- Prioritize backward compatibility during refactoring
+- Keep legacy scripts functional until new version is stable
+- Focus on user experience and ease of installation
+- Ensure cross-platform compatibility (Windows, macOS, Linux)
+- Consider user feedback and feature requests from GitHub issues

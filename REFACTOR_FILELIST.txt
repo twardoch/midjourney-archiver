@@ -1,0 +1,8 @@
+20	./README.md
+19	./mj-metadata-archiver.py
+14	./llms.txt
+12	./PLAN.md
+9	./mj-downloader.py
+9	./mj-download.sh
+6	./TODO.md
+2	./CHANGELOG.md

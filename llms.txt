@@ -1,65 +1,100 @@
-This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+Project Structure:
+📁 midjourney-archiver
+├── 📄 .gitignore
+├── 📄 CHANGELOG.md
+├── 📄 LICENSE.txt
+├── 📄 mj-download.sh
+├── 📄 mj-downloader.py
+├── 📄 mj-metadata-archiver.py
+├── 📄 PLAN.md
+├── 📄 README.md
+├── 📄 REFACTOR_FILELIST.txt
+├── 📄 requirements.txt
+└── 📄 TODO.md
 
-<file_summary>
-This section contains a summary of this file.
 
-<purpose>
-This file contains a packed representation of the entire repository's contents.
-It is designed to be easily consumable by AI systems for analysis, code review,
-or other automated processes.
-</purpose>
-
-<file_format>
-The content is organized as follows:
-1. This summary section
-2. Repository information
-3. Directory structure
-4. Repository files (if enabled)
-5. Multiple file entries, each consisting of:
-  - File path as an attribute
-  - Full contents of the file
-</file_format>
-
-<usage_guidelines>
-- This file should be treated as read-only. Any changes should be made to the
-  original repository files, not this packed version.
-- When processing this file, use the file path to distinguish
-  between different files in the repository.
-- Be aware that this file may contain sensitive information. Handle it with
-  the same level of security as you would the original repository.
-</usage_guidelines>
-
-<notes>
-- Some files may have been excluded based on .gitignore rules and Repomix's configuration
-- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Files matching patterns in .gitignore are excluded
-- Files matching default ignore patterns are excluded
-- Files are sorted by Git change count (files with more changes are at the bottom)
-</notes>
-
-</file_summary>
-
-<directory_structure>
-.gitignore
-LICENSE.txt
-mj-download.sh
-mj-downloader.py
-mj-metadata-archiver.py
-README.md
-requirements.txt
-</directory_structure>
-
-<files>
-This section contains the contents of the repository's files.
-
-<file path=".gitignore">
+<documents>
+<document index="1">
+<source>.gitignore</source>
+<document_content>
 .idea/
 tmp*
 venv*
 mj-archive/
-</file>
+</document_content>
+</document>
 
-<file path="LICENSE.txt">
+<document index="2">
+<source>CHANGELOG.md</source>
+<document_content>
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- Comprehensive CLI argument parsing using `argparse` for both Python scripts
+- Environment variable support for credentials (`MIDJOURNEY_USER_ID`, `MIDJOURNEY_SESSION_TOKEN`)
+- Incremental archiving capability - can fetch from the latest date in existing archive
+- Job type filtering - can specify which job types to archive and download
+- Configurable JSON indentation for metadata files
+- Option to overwrite existing metadata files
+- Enhanced error handling with retries and timeout support
+- Improved logging throughout both scripts
+- Interactive shell script (`mj-download.sh`) with:
+  - Python and dependency checks
+  - Environment variable detection
+  - Parameter customization
+  - Better user guidance
+
+### Changed
+- Major refactor of `mj-metadata-archiver.py`:
+  - Now supports multiple job types (not just "upscale")
+  - Better API error handling
+  - More flexible date handling
+  - Configurable archive location
+- Major refactor of `mj-downloader.py`:
+  - Added job type filtering
+  - Improved error handling for JSON parsing
+  - Better HTTP error handling with retries
+  - More robust file downloading
+- Updated `README.md` with comprehensive usage instructions
+- Shell script now provides clearer browser-specific instructions
+
+### Fixed
+- Missing error handling for JSON parsing
+- API timeout issues
+- File download interruption handling
+
+## [0.1.0] - 2022-12-12
+
+### Added
+- Initial `PLAN.md`, `TODO.md`, `CHANGELOG.md` files
+- Basic shell script `mj-download.sh` for interactive usage
+- `LICENSE.txt` (MIT License)
+- Updated README with installation and usage instructions
+
+### Changed
+- Improved documentation
+
+## [0.0.1] - 2022-12-12
+
+### Added
+- Initial version of `mj-metadata-archiver.py` - crawls and archives job metadata
+- Initial version of `mj-downloader.py` - downloads images from archived metadata
+- Basic `requirements.txt` with requests dependency
+- Initial `README.md` with basic usage instructions
+
+</document_content>
+</document>
+
+<document index="3">
+<source>LICENSE.txt</source>
+<document_content>
 MIT License
 
 Copyright (c) 2022 Stefaan Lippens
@@ -81,119 +116,1237 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-</file>
 
-<file path="mj-download.sh">
+</document_content>
+</document>
+
+<document index="4">
+<source>PLAN.md</source>
+<document_content>
+# Midjourney Archiver - Comprehensive Improvement Plan
+
+## Overview
+
+This document outlines a comprehensive plan to transform the Midjourney Archiver from a collection of scripts into a robust, professional-grade archiving solution. The improvements focus on code quality, architecture, usability, performance, and security.
+
+## Current State Analysis
+
+### Strengths
+- Functional core features for metadata archiving and image downloading
+- Basic CLI support with argparse
+- Environment variable support for credentials
+- Incremental archiving capability
+
+### Weaknesses
+- Monolithic script architecture
+- Limited error handling and recovery mechanisms
+- No type hints or modern Python features
+- Manual credential management
+- No packaging or distribution system
+- Limited extensibility
+- No test coverage
+- Performance limitations (sequential processing)
+
+## Phase 1: Architecture Refactoring and Code Quality (Priority: High)
+
+### 1.1 Project Structure Reorganization
+
+Create a proper Python package structure:
+```
+midjourney-archiver/
+├── src/
+│   └── midjourney_archiver/
+│       ├── __init__.py
+│       ├── api/
+│       │   ├── __init__.py
+│       │   ├── client.py          # API client with session management
+│       │   ├── models.py          # Pydantic models for API responses
+│       │   └── exceptions.py      # Custom exceptions
+│       ├── core/
+│       │   ├── __init__.py
+│       │   ├── archiver.py        # Core archiving logic
+│       │   ├── downloader.py      # Image downloading logic
+│       │   ├── config.py          # Configuration management
+│       │   └── utils.py           # Utility functions
+│       ├── cli/
+│       │   ├── __init__.py
+│       │   ├── commands.py        # Click-based CLI commands
+│       │   └── interactive.py     # Interactive setup wizard
+│       └── storage/
+│           ├── __init__.py
+│           ├── filesystem.py      # File system operations
+│           └── database.py        # SQLite for metadata indexing
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── fixtures/
+├── docker/
+│   └── Dockerfile
+├── docs/
+│   ├── installation.md
+│   ├── usage.md
+│   ├── api.md
+│   └── development.md
+├── pyproject.toml
+├── setup.py
+├── tox.ini
+└── .github/
+    └── workflows/
+        ├── test.yml
+        └── release.yml
+```
+
+### 1.2 Code Quality Improvements
+
+1. **Type Hints Throughout**
+   - Add comprehensive type hints to all functions and classes
+   - Use `mypy` for static type checking
+   - Leverage Python 3.9+ features (Union types with |, etc.)
+
+2. **Modern Python Features**
+   - Use dataclasses or Pydantic for data models
+   - Implement async/await for concurrent operations
+   - Use pathlib consistently instead of os.path
+   - Context managers for resource management
+
+3. **Error Handling Strategy**
+   - Custom exception hierarchy
+   - Proper error recovery mechanisms
+   - Detailed error messages with actionable suggestions
+   - Graceful degradation for non-critical failures
+
+4. **Logging Enhancement**
+   - Structured logging with different levels
+   - Log rotation and file output options
+   - Progress tracking with rich/tqdm integration
+   - Detailed debug mode for troubleshooting
+
+### 1.3 Configuration Management
+
+Implement a hierarchical configuration system:
+1. Default values in code
+2. System-wide config file (`/etc/midjourney-archiver/config.yaml`)
+3. User config file (`~/.config/midjourney-archiver/config.yaml`)
+4. Project-specific config (`.midjourney-archiver.yaml`)
+5. Environment variables
+6. Command-line arguments
+
+Configuration features:
+- YAML-based configuration with schema validation
+- Secure credential storage with keyring integration
+- Profile support for multiple accounts
+- Configuration migration for upgrades
+
+## Phase 2: Core Functionality Enhancement (Priority: High)
+
+### 2.1 API Client Improvements
+
+1. **Session Management**
+   - Automatic session refresh
+   - Connection pooling
+   - Request retry with exponential backoff
+   - Rate limiting with token bucket algorithm
+   - Circuit breaker pattern for API failures
+
+2. **API Coverage**
+   - Support all job types (upscale, variation, grid, etc.)
+   - Fetch user profile information
+   - Support for collections/folders
+   - Real-time job status monitoring
+
+### 2.2 Archiving Enhancements
+
+1. **Intelligent Archiving**
+   - Duplicate detection using content hashing
+   - Delta synchronization
+   - Archive verification and integrity checking
+   - Automatic resume for interrupted operations
+   - Batch processing with configurable chunk sizes
+
+2. **Metadata Management**
+   - SQLite database for fast queries
+   - Full-text search on prompts
+   - Tag extraction from prompts
+   - Custom metadata fields
+   - Export to various formats (CSV, JSON, Parquet)
+
+3. **Storage Optimization**
+   - Configurable directory structure templates
+   - Compression options for metadata
+   - Symlink support for deduplicated images
+   - Cloud storage backend support (S3, GCS, Azure)
+
+### 2.3 Downloading Improvements
+
+1. **Performance**
+   - Concurrent downloads with configurable workers
+   - Resume partial downloads
+   - Bandwidth throttling
+   - Progress tracking per file and overall
+   - Download queue management
+
+2. **Image Processing**
+   - Optional format conversion
+   - Thumbnail generation
+   - EXIF metadata embedding
+   - Watermark removal detection
+   - Image optimization (compression)
+
+## Phase 3: User Experience and Interface (Priority: Medium)
+
+### 3.1 CLI Enhancement
+
+1. **Rich CLI with Click**
+   - Subcommands for different operations
+   - Interactive prompts for missing parameters
+   - Shell completion support
+   - Contextual help with examples
+   - ASCII art banner and styled output
+
+2. **Commands Structure**
+   ```
+   midjourney-archiver
+   ├── auth           # Manage authentication
+   │   ├── login      # Interactive login
+   │   ├── logout     # Clear credentials
+   │   └── status     # Check auth status
+   ├── archive        # Archive metadata
+   │   ├── all        # Archive everything
+   │   ├── recent     # Archive recent jobs
+   │   ├── range      # Archive date range
+   │   └── verify     # Verify archive integrity
+   ├── download       # Download images
+   │   ├── all        # Download all images
+   │   ├── missing    # Download only missing
+   │   └── verify     # Verify downloads
+   ├── search         # Search archive
+   │   ├── prompt     # Search by prompt text
+   │   ├── date       # Search by date
+   │   └── tags      # Search by tags
+   ├── export         # Export data
+   │   ├── csv        # Export to CSV
+   │   ├── json       # Export to JSON
+   │   └── gallery   # Generate HTML gallery
+   └── config         # Manage configuration
+       ├── init       # Initialize config
+       ├── show       # Show current config
+       └── edit       # Edit config file
+   ```
+
+### 3.2 Web Interface (Optional)
+
+1. **Local Web UI**
+   - Flask/FastAPI-based web interface
+   - Browse archived images with thumbnails
+   - Search and filter capabilities
+   - Batch operations
+   - Real-time archiving progress
+
+2. **Features**
+   - Gallery view with infinite scroll
+   - Lightbox for full-size viewing
+   - Metadata sidebar
+   - Download queue management
+   - Statistics dashboard
+
+### 3.3 Interactive Setup Wizard
+
+1. **First-Run Experience**
+   - Guided credential setup
+   - Browser automation for token extraction
+   - Configuration wizard
+   - Test connection verification
+   - Sample archive creation
+
+## Phase 4: Deployment and Distribution (Priority: Medium)
+
+### 4.1 Packaging
+
+1. **PyPI Distribution**
+   - Build with setuptools/poetry
+   - Platform-specific wheels
+   - Automated release process
+   - Version management with semantic versioning
+
+2. **Alternative Distributions**
+   - Homebrew formula for macOS
+   - Snap package for Linux
+   - Chocolatey package for Windows
+   - Standalone executables with PyInstaller
+
+### 4.2 Container Support
+
+1. **Docker**
+   - Multi-stage Dockerfile
+   - Alpine and Ubuntu variants
+   - Docker Compose for full stack
+   - Volume mapping for archives
+   - Environment-based configuration
+
+2. **Kubernetes**
+   - Helm chart for deployment
+   - CronJob for scheduled archiving
+   - Persistent volume claims
+   - Secret management
+
+### 4.3 Installation Automation
+
+1. **Cross-Platform Installer**
+   - Shell script for Unix-like systems
+   - PowerShell script for Windows
+   - Dependency checking
+   - Virtual environment setup
+   - Post-install configuration
+
+## Phase 5: Advanced Features (Priority: Low)
+
+### 5.1 Automation and Integration
+
+1. **Scheduling**
+   - Cron/Task Scheduler integration
+   - Built-in scheduler with cron syntax
+   - Webhook notifications
+   - Email reports
+
+2. **Third-Party Integrations**
+   - Discord bot for notifications
+   - Slack integration
+   - IFTTT/Zapier webhooks
+   - Cloud backup services
+
+### 5.2 Analytics and Insights
+
+1. **Usage Analytics**
+   - Prompt frequency analysis
+   - Style evolution tracking
+   - Generation statistics
+   - Cost estimation
+
+2. **AI-Powered Features**
+   - Automatic tagging with ML
+   - Similar image clustering
+   - Prompt optimization suggestions
+   - Trend detection
+
+### 5.3 Collaboration Features
+
+1. **Multi-User Support**
+   - Shared archives
+   - Access control
+   - Collaboration workflows
+   - Change tracking
+
+## Phase 6: Security and Compliance (Priority: High)
+
+### 6.1 Security Enhancements
+
+1. **Credential Security**
+   - Keyring/keychain integration
+   - Encrypted credential storage
+   - OAuth flow implementation (if supported)
+   - Session token rotation
+
+2. **Data Protection**
+   - Archive encryption options
+   - Secure deletion
+   - Access logging
+   - Integrity verification
+
+### 6.2 Compliance
+
+1. **Privacy**
+   - GDPR compliance features
+   - Data retention policies
+   - Anonymization options
+   - Export/deletion tools
+
+2. **Licensing**
+   - License compliance checking
+   - Attribution management
+   - Commercial use tracking
+
+## Phase 7: Testing and Quality Assurance (Priority: High)
+
+### 7.1 Test Coverage
+
+1. **Unit Tests**
+   - 90%+ code coverage target
+   - Pytest framework
+   - Mocking for external services
+   - Property-based testing with Hypothesis
+
+2. **Integration Tests**
+   - API client testing
+   - File system operations
+   - Database operations
+   - End-to-end workflows
+
+3. **Performance Tests**
+   - Load testing for large archives
+   - Memory profiling
+   - Concurrent operation testing
+   - Benchmark suite
+
+### 7.2 Continuous Integration
+
+1. **CI/CD Pipeline**
+   - GitHub Actions workflow
+   - Multi-platform testing
+   - Automated releases
+   - Security scanning
+   - Dependency updates
+
+## Implementation Strategy
+
+### Priority Order
+1. **Immediate (Week 1-2)**
+   - Project restructuring
+   - Basic type hints
+   - Critical bug fixes
+   - Updated documentation
+
+2. **Short Term (Week 3-4)**
+   - API client refactoring
+   - Configuration system
+   - Enhanced error handling
+   - Basic tests
+
+3. **Medium Term (Month 2-3)**
+   - Performance improvements
+   - CLI enhancement
+   - Packaging and distribution
+   - Comprehensive testing
+
+4. **Long Term (Month 4-6)**
+   - Advanced features
+   - Web interface
+   - Analytics
+   - Full automation
+
+### Success Metrics
+- Code coverage > 90%
+- Performance improvement > 5x for large archives
+- User satisfaction (GitHub stars, issues)
+- Cross-platform compatibility
+- Zero critical bugs
+- Active community contribution
+
+## Conclusion
+
+This comprehensive plan transforms the Midjourney Archiver into a professional, robust tool that can serve both individual creators and organizations. The phased approach ensures continuous improvement while maintaining stability and backward compatibility.
+</document_content>
+</document>
+
+<document index="5">
+<source>README.md</source>
+<document_content>
+# Midjourney Archive Suite
+
+The Midjourney Archive Suite is a collection of tools designed to help you create a comprehensive local backup of your Midjourney creations. It fetches your job history, including full metadata like prompts and enqueue times, and downloads the corresponding images directly to your computer.
+
+## Part 1: User Guide
+
+### What is the Midjourney Archive Suite?
+
+This suite consists of:
+*   **`mj-metadata-archiver.py`**: A Python script to download the metadata for your Midjourney jobs (prompts, job IDs, timestamps, etc.).
+*   **`mj-downloader.py`**: A Python script to download the actual images based on the metadata collected by the archiver.
+*   **`mj-download.sh`**: A user-friendly shell script (for Linux/macOS) that automates the setup and execution of both Python scripts.
+
+Together, these tools allow you to build a complete, offline archive of your Midjourney generations.
+
+### Who is this for?
+
+This tool is for any Midjourney user who wants:
+*   A **local backup** of their generated images and the prompts that created them.
+*   An **offline archive** to browse their work without needing internet access or relying on Midjourney's interface.
+*   To **analyze their creative process** by having easy access to all prompts and corresponding results.
+*   **Protection against potential data loss** if images are ever removed or become inaccessible from Midjourney's servers.
+
+### Why is it useful?
+
+*   **Complete Archival:** Saves both the high-resolution images and the detailed metadata (prompts, job types, parameters) associated with them.
+*   **Offline Access:** Browse your entire Midjourney history locally, anytime.
+*   **Data Ownership:** Keep your own copy of your creations.
+*   **Organization:** Metadata and images are stored in a structured directory format based on date.
+*   **Incremental Backups:** The metadata archiver can pick up where it left off, only fetching new jobs since the last run.
+
+### Installation
+
+1.  **Prerequisites:**
+    *   **Python:** You need Python 3.9 or newer installed. You can check by running `python --version` or `python3 --version`.
+    *   **Git (Recommended):** For easy downloading and updates.
+
+2.  **Download the Suite:**
+    *   **With Git (Recommended):**
+        ```bash
+        git clone <repository_url>
+        cd midjourney-archive-suite # Or your chosen directory name
+        ```
+        (Replace `<repository_url>` with the actual URL of this repository).
+    *   **Manual Download:** Download the source code as a ZIP file from the repository page and extract it to a folder on your computer.
+
+3.  **Install Dependencies:**
+    The scripts require the `requests` library to communicate with the Midjourney API.
+    Navigate to the directory where you downloaded the files and run:
+    ```bash
+    pip install -r requirements.txt
+    ```
+    Or, if you use `pip3`:
+    ```bash
+    pip3 install -r requirements.txt
+    ```
+
+### Usage
+
+You can use the tools via the interactive shell script (recommended for ease of use) or by running the Python scripts manually (for more control or automation).
+
+#### Credentials: User ID and Session Token
+
+Both methods require your Midjourney **User ID** and **Session Token** for authentication. Here's how to find them:
+
+1.  Open your web browser (Chromium-based like Chrome, Edge, Brave, Opera is recommended for these instructions) and go to: `https://www.midjourney.com/app/`
+2.  Sign in to your Midjourney account if you haven't already.
+3.  Open the **Developer Tools**. You can usually do this by pressing `F12`, or right-clicking on the page and selecting 'Inspect' or 'Inspect Element'.
+
+4.  **To get your User ID:**
+    *   In Developer Tools, go to the **'Network'** tab.
+    *   Make sure **'Fetch/XHR'** is selected as a filter (if available).
+    *   Look for a request in the list that starts with `recent-jobs?...` or similar. You might need to scroll or interact with the Midjourney app (e.g., click 'Archive', refresh the page, or scroll through your jobs) to trigger this request.
+    *   Select this request. In the **'Headers'** (or 'Request') tab for this request, look at the 'Request URL' or 'Query String Parameters'. You should see `userId=YOUR_USER_ID`. It's a long string of letters and numbers. Copy this value.
+
+5.  **To get your Session Token:**
+    *   In Developer Tools, go to the **'Application'** tab (it might be under 'More tabs' or '>>').
+    *   On the left side, under 'Storage', expand **'Cookies'** and select `https://www.midjourney.com`.
+    *   In the table of cookies, find the cookie named `__Secure-next-auth.session-token`.
+    *   Copy its entire **'Cookie Value'**. This is a very long string.
+
+**Important:** Keep your Session Token private, as it grants access to your Midjourney account.
+
+You can provide these credentials to the scripts in three ways (listed by priority):
+1.  **Command-line arguments:** `--user-id YOUR_USER_ID --session-token YOUR_TOKEN` (for Python scripts).
+2.  **Environment variables:** `MIDJOURNEY_USER_ID` and `MIDJOURNEY_SESSION_TOKEN`.
+3.  **Interactive prompt:** If not provided by the above methods, the scripts will ask you to enter them.
+
+#### Method 1: Interactive Shell Script (`mj-download.sh`)
+
+This is the recommended method for most users on Linux or macOS, as it simplifies the process.
+
+1.  **Make it executable (if needed):**
+    ```bash
+    chmod +x mj-download.sh
+    ```
+2.  **Run the script:**
+    ```bash
+    ./mj-download.sh
+    ```
+
+The script will:
+*   Check if Python and the `requests` library are installed.
+*   Guide you on obtaining your User ID and Session Token if you haven't already.
+*   Ask if you want to use credentials found in environment variables (if set).
+*   Prompt you to enter your User ID and Session Token if they are not found.
+*   Offer default settings for archival and download, and allow you to customize them.
+*   Execute the `mj-metadata-archiver.py` script to download your job metadata.
+*   Execute the `mj-downloader.py` script to download the images.
+
+Follow the on-screen instructions.
+
+#### Method 2: Manual Python Script Execution
+
+This method gives you more granular control and is necessary if you're on Windows (without a Bash environment like WSL or Git Bash) or want to automate the scripts.
+
+**Step 1: Archive Metadata (`mj-metadata-archiver.py`)**
+
+This script connects to Midjourney and downloads the metadata for your jobs.
+
+**Basic Command:**
+```bash
+python mj-metadata-archiver.py [OPTIONS]
+# or
+python3 mj-metadata-archiver.py [OPTIONS]
+```
+
+**Key Options:**
+*   `--archive-root PATH`: Directory to store the metadata (default: `./mj-archive`).
+*   `--user-id TEXT`: Your Midjourney User ID.
+*   `--session-token TEXT`: Your Midjourney `__Secure-next-auth.session-token`.
+*   `--job-type TEXT`: Type of jobs to fetch (e.g., 'upscale', 'grid'). Use 'all' or 'None' to fetch all job types (default: 'upscale').
+*   `--from-date TEXT`: Start crawling from this date/time. Format: 'YYYY-MM-DD HH:MM:SS.ffffff', 'YYYY-MM-DD HH:MM:SS', or 'YYYY-MM-DD'. If only date is given, time is assumed as 00:00:00. (Default: Start from the newest jobs).
+*   `--get-from-date-from-archive`: Automatically set `--from-date` to the `enqueue_time` of the latest job found in the existing archive. This is useful for incremental backups. Ignored if `--from-date` is explicitly set.
+*   `--page-limit INTEGER`: Limit the number of API pages to crawl. Each page typically contains 50 jobs. (Default: crawl all available pages).
+*   `--overwrite-metadata`: Overwrite existing metadata files if they are encountered again. (Default: skip existing files).
+*   `--json-indent INTEGER`: Indentation level for JSON files. Use `0` for the most compact JSON (no newlines). (Default: `2`).
+*   `--log-level [DEBUG|INFO|WARNING|ERROR|CRITICAL]`: Set the logging verbosity (default: `INFO`).
+*   `--help`: Show this help message and exit.
+
+**Example (archive all job types, incrementally):**
+```bash
+python mj-metadata-archiver.py --job-type all --get-from-date-from-archive
+```
+(Assuming User ID and Session Token are set as environment variables or you want to be prompted).
+
+**Step 2: Download Images (`mj-downloader.py`)**
+
+After archiving the metadata, this script downloads the actual images.
+
+**Basic Command:**
+```bash
+python mj-downloader.py [OPTIONS]
+# or
+python3 mj-downloader.py [OPTIONS]
+```
+
+**Key Options:**
+*   `--archive-root PATH`: Root directory of the Midjourney metadata archive (where `mj-metadata-archiver.py` saved its files) (default: `./mj-archive`).
+*   `--job-types-to-download TEXT`: Comma-separated list of job types to download images for (e.g., 'upscale,grid'). Provide an empty string or 'all' to download for all types found in metadata. (Default: 'upscale').
+*   `--log-level [DEBUG|INFO|WARNING|ERROR|CRITICAL]`: Set the logging level (default: `INFO`).
+*   `--help`: Show this help message and exit.
+
+**Example (download upscales and grids):**
+```bash
+python mj-downloader.py --job-types-to-download "upscale,grid"
+```
+
+#### Method 3: Programmatic Usage (as Python Modules)
+
+For advanced users or integration into other Python projects, the core logic of the archiver and downloader can be imported and used directly.
+
+You would instantiate `MidjourneyMetadataArchiver` from `mj_metadata_archiver.py` and `MidjourneyDownloader` from `mj_downloader.py`.
+
+**Example: Using `MidjourneyMetadataArchiver`**
+```python
+from pathlib import Path
+from mj_metadata_archiver import MidjourneyMetadataArchiver # Assuming the script is in your PYTHONPATH
+
+# Configuration (replace with your actual values or config mechanism)
+USER_ID = "your_user_id"
+SESSION_TOKEN = "your_session_token"
+ARCHIVE_DIR = Path("./my_custom_mj_archive")
+
+# Ensure archive directory exists
+ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+
+archiver = MidjourneyMetadataArchiver(
+    archive_root=ARCHIVE_DIR,
+    user_id=USER_ID,
+    session_token=SESSION_TOKEN,
+    json_indent=2
+)
+
+print("Starting metadata crawl...")
+archiver.crawl(
+    job_type="all",  # Fetch all job types
+    get_from_date_from_archive=True # Incremental update
+)
+print(f"Metadata crawl finished. Stats: {archiver.stats}")
+```
+
+**Example: Using `MidjourneyDownloader`**
+```python
+from pathlib import Path
+from mj_downloader import MidjourneyDownloader # Assuming the script is in your PYTHONPATH
+
+# Configuration
+ARCHIVE_DIR = Path("./my_custom_mj_archive") # Should be the same as used by the archiver
+
+# Specify job types to download, or an empty set for all
+job_types_to_get = {"upscale", "grid"}
+# For all types with image_paths: job_types_to_get = set()
+
+downloader = MidjourneyDownloader(job_types_to_download=job_types_to_get)
+
+print(f"Starting image download from: {ARCHIVE_DIR}")
+downloader.walk_archive(archive_root=ARCHIVE_DIR)
+print(f"Image download finished. Stats: {downloader.stats}")
+```
+When using the classes programmatically, you are responsible for providing all necessary configurations (like credentials, paths, job types) that are normally handled by `argparse` in the scripts or by the `mj-download.sh` wrapper.
+
+### Output Folder Structure
+
+The scripts will organize the downloaded metadata and images into a structured format within your specified archive root (default: `mj-archive/`):
+
+```
+mj-archive/
+└── YYYY/                     # Year
+    └── YYYY-MM/              # Year-Month
+        └── YYYY-MM-DD/       # Year-Month-Day (based on job enqueue time)
+            ├── YYYYMMDD-HHMMSS_jobid.json          # Full metadata for the job
+            ├── YYYYMMDD-HHMMSS_jobid.prompt.txt    # Plain text prompt and full command
+            ├── YYYYMMDD-HHMMSS_jobid.png           # Downloaded image (if single image job)
+            ├── YYYYMMDD-HHMMSS_jobid-1.png         # First image of a multi-image job (e.g., grid)
+            ├── YYYYMMDD-HHMMSS_jobid-2.png         # Second image
+            └── ...                                 # etc.
+```
+The filenames are based on the job's enqueue time and its unique job ID.
+
+## Part 2: Technical Documentation
+
+### How the Code Works
+
+#### `mj-metadata-archiver.py`
+
+This script is responsible for fetching job metadata from Midjourney's API.
+1.  **Authentication & Configuration:**
+    *   Takes User ID and Session Token as input (CLI args, env vars, or prompt).
+    *   Configures parameters like archive root, job types to fetch, date ranges, logging level.
+2.  **API Interaction:**
+    *   Constructs requests to the Midjourney API endpoint: `https://www.midjourney.com/api/app/recent-jobs/`.
+    *   Sends GET requests with appropriate headers (including the session token cookie) and query parameters (user ID, job type, amount, page, fromDate).
+    *   The `crawl` method handles pagination, requesting jobs in batches (typically 50 per page).
+3.  **Incremental Archiving:**
+    *   If `--get-from-date-from-archive` is used, it first scans the existing archive for the latest `enqueue_time` among the already saved JSON files. This time is then used as the `fromDate` for the API request, ensuring only newer jobs are fetched.
+4.  **Data Processing & Storage:**
+    *   Parses the JSON response from the API. Each item in the list is a job object.
+    *   For each job:
+        *   Extracts the `enqueue_time` and formats it to create a directory structure: `YYYY/YYYY-MM/YYYY-MM-DD`.
+        *   Creates these directories if they don't exist under the specified `archive_root`.
+        *   Saves the full job metadata as a JSON file (e.g., `YYYYMMDD-HHMMSS_jobid.json`).
+        *   Extracts the `prompt` and `full_command` from the job data and saves them into a separate text file (e.g., `YYYYMMDD-HHMMSS_jobid.prompt.txt`) for quick viewing.
+    *   Handles `--overwrite-metadata` to either skip existing files or replace them.
+5.  **Logging & Stats:**
+    *   Provides logging output (INFO, DEBUG levels) about its progress.
+    *   Collects statistics (e.g., jobs processed, types, errors) and prints them at the end.
+
+#### `mj-downloader.py`
+
+This script downloads the actual image files based on the metadata collected by `mj-metadata-archiver.py`.
+1.  **Configuration:**
+    *   Takes the `archive_root` and a set of `job_types_to_download` as input.
+2.  **Archive Traversal:**
+    *   The `walk_archive` method recursively scans the `archive_root` directory for `*.json` metadata files.
+3.  **Image URL Extraction & Filtering:**
+    *   For each JSON file found:
+        *   It reads and parses the JSON content.
+        *   Checks the job's `type` against the `job_types_to_download` set (if provided; otherwise, processes all jobs with image paths).
+        *   If the job type matches (or if downloading all types), it looks for an `image_paths` list in the JSON data. This list contains the direct URLs to the generated images.
+4.  **Image Downloading:**
+    *   For each URL in `image_paths`:
+        *   Constructs a local filename. If a job has multiple images (e.g., a grid), it appends an index (e.g., `-1`, `-2`) to the filename. The extension is derived from the URL or defaults to `.png`.
+        *   Checks if the image file already exists at the target path. If so, it skips the download.
+        *   If the file doesn't exist, it makes an HTTP GET request to the image URL.
+        *   Streams the image content and writes it to a new file in the same directory as its corresponding `.json` metadata file.
+5.  **Logging & Stats:**
+    *   Logs its actions, including successful downloads, skips, and any errors encountered (HTTP errors, connection issues, file I/O errors).
+    *   Collects and displays download statistics upon completion.
+
+#### `mj-download.sh`
+
+This is a Bash shell script that acts as a high-level wrapper for the two Python scripts.
+1.  **Environment Checks:**
+    *   Verifies if `python` or `python3` is available.
+    *   Checks if the `requests` Python module is installed.
+2.  **Credential Management:**
+    *   Checks for `MIDJOURNEY_USER_ID` and `MIDJOURNEY_SESSION_TOKEN` environment variables.
+    *   If not found, or if the user chooses not to use the environment variables, it provides detailed instructions on how to obtain these credentials and prompts the user to input them. These are then exported as environment variables for the Python scripts.
+3.  **Configuration:**
+    *   Defines default settings for various options of the Python scripts (e.g., archive root, job types).
+    *   Optionally allows the user to customize these settings via interactive prompts.
+4.  **Script Execution:**
+    *   Constructs the command-line arguments for `mj-metadata-archiver.py` based on the (customized) settings.
+    *   Executes `mj-metadata-archiver.py`.
+    *   If the metadata archiver completes successfully (or if the user chooses to proceed despite errors), it constructs arguments for and executes `mj-downloader.py`.
+5.  **Error Handling & Reporting:**
+    *   Checks the exit codes of the Python scripts and reports whether they completed successfully or with errors.
+
+### Project Structure
+
+```
+.
+├── mj-metadata-archiver.py  # Python script for downloading job metadata
+├── mj-downloader.py         # Python script for downloading images
+├── mj-download.sh           # Shell script for easy setup and execution
+├── requirements.txt         # Python package dependencies (requests)
+├── README.md                # This file
+├── LICENSE.txt              # Project license
+├── mj-archive/              # Default output directory for archived data (created by scripts)
+│   └── YYYY/
+│       └── YYYY-MM/
+│           └── YYYY-MM-DD/
+│               ├── ...json
+│               ├── ...prompt.txt
+│               └── ...png
+...
+```
+
+### Coding and Contribution Rules
+
+We welcome contributions! Please follow these guidelines:
+
+*   **Coding Style:**
+    *   Adhere to [PEP 8 -- Style Guide for Python Code](https://www.python.org/dev/peps/pep-0008/).
+    *   Use a linter like Flake8 to check your code.
+    *   Keep lines to a reasonable length (e.g., under 100 characters).
+*   **Dependencies:**
+    *   Keep external dependencies to a minimum.
+    *   If a new dependency is essential, add it to `requirements.txt` and justify its inclusion.
+*   **Error Handling & Logging:**
+    *   Implement robust error handling. Catch specific exceptions where possible.
+    *   Use the `logging` module for output. Provide informative error messages and appropriate log levels (DEBUG, INFO, WARNING, ERROR).
+*   **API Interaction:**
+    *   Be mindful of the Midjourney API. Avoid making overly frequent requests.
+    *   Currently, the script doesn't implement explicit rate limiting, but this could be a valuable contribution.
+*   **Testing (Aspirational):**
+    *   While the project currently lacks automated tests, contributions of new features or significant refactors should ideally be accompanied by unit tests or integration tests.
+    *   Consider using Python's `unittest` or `pytest` frameworks.
+*   **Commit Messages:**
+    *   Follow conventional commit message style (e.g., imperative mood: "Add feature X", "Fix bug Y").
+    *   Provide a concise subject line and a more detailed body if necessary.
+*   **Pull Requests (PRs):**
+    *   Create PRs against the `main` branch (or a designated development branch if one exists).
+    *   Clearly describe the changes made and the problem they solve.
+    *   Reference any related issues (e.g., "Closes #123").
+    *   Ensure your code is well-commented, especially for complex logic.
+*   **Environment Variables:**
+    *   If introducing new configurable parameters that can be set via environment variables, document them clearly in the README.
+*   **Compatibility:**
+    *   Aim for compatibility with Python 3.9 and above.
+
+### Disclaimer
+
+This tool interacts with Midjourney's web services. Changes to their website or API could break this tool at any time. The developers of this tool are not responsible for any issues that may arise from its use, including (but not limited to) account suspension or data loss.
+
+**Always respect Midjourney's Terms of Service.** This tool is intended for personal, archival purposes of content you have legitimately generated.
+
+This software is provided "as-is", without warranty of any kind. Use at your own risk.
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE.txt).
+
+</document_content>
+</document>
+
+<document index="6">
+<source>REFACTOR_FILELIST.txt</source>
+<document_content>
+20	./README.md
+19	./mj-metadata-archiver.py
+14	./llms.txt
+12	./PLAN.md
+9	./mj-downloader.py
+9	./mj-download.sh
+6	./TODO.md
+2	./CHANGELOG.md
+
+</document_content>
+</document>
+
+<document index="7">
+<source>TODO.md</source>
+<document_content>
+# TODO
+
+## Immediate Priority (Week 1-2)
+
+### Project Structure
+- [ ] Create proper Python package structure under `src/midjourney_archiver/`
+- [ ] Split monolithic scripts into modules (api, core, cli, storage)
+- [ ] Create `__init__.py` files for all packages
+- [ ] Move existing scripts to legacy folder for reference
+
+### Code Quality
+- [ ] Add type hints to all functions in `mj-metadata-archiver.py`
+- [ ] Add type hints to all functions in `mj-downloader.py`
+- [ ] Replace os.path with pathlib throughout codebase
+- [ ] Add docstrings to all classes and functions
+- [ ] Create custom exception classes for better error handling
+- [ ] Implement proper logging with configurable levels
+
+### Configuration System
+- [ ] Create `config.py` module for configuration management
+- [ ] Implement YAML-based configuration file support
+- [ ] Add configuration schema validation
+- [ ] Support config hierarchy (defaults → system → user → project → env → CLI)
+- [ ] Create example configuration file
+
+### Testing Infrastructure
+- [ ] Set up pytest framework
+- [ ] Create initial unit tests for core functions
+- [ ] Add GitHub Actions workflow for automated testing
+- [ ] Configure mypy for type checking
+- [ ] Set up pre-commit hooks
+
+## Short Term Priority (Week 3-4)
+
+### API Client Refactoring
+- [ ] Create dedicated `api/client.py` module
+- [ ] Implement session management class
+- [ ] Add connection pooling
+- [ ] Implement retry logic with exponential backoff
+- [ ] Add rate limiting to prevent API throttling
+- [ ] Create Pydantic models for API responses
+
+### Enhanced CLI
+- [ ] Migrate from argparse to Click framework
+- [ ] Implement subcommand structure (auth, archive, download, search, etc.)
+- [ ] Add interactive prompts for missing parameters
+- [ ] Implement progress bars with rich/tqdm
+- [ ] Add shell completion support
+- [ ] Create `--help` with examples for all commands
+
+### Error Handling
+- [ ] Implement comprehensive try-except blocks
+- [ ] Add specific error messages with suggestions
+- [ ] Create error recovery mechanisms
+- [ ] Add validation for all inputs
+- [ ] Implement graceful shutdown handling
+
+### Documentation
+- [ ] Update README.md with new package structure
+- [ ] Create detailed installation guide
+- [ ] Document all CLI commands with examples
+- [ ] Add troubleshooting guide
+- [ ] Create developer documentation
+
+## Medium Term Priority (Month 2-3)
+
+### Performance Improvements
+- [ ] Implement concurrent image downloading
+- [ ] Add async/await support for API calls
+- [ ] Create download queue management system
+- [ ] Implement resume capability for interrupted downloads
+- [ ] Add progress tracking for batch operations
+- [ ] Optimize file I/O operations
+
+### Database Integration
+- [ ] Design SQLite schema for metadata storage
+- [ ] Implement database initialization and migration
+- [ ] Create indexing for fast searches
+- [ ] Add full-text search on prompts
+- [ ] Implement query interface
+- [ ] Add export functionality (CSV, JSON)
+
+### Packaging and Distribution
+- [ ] Create `pyproject.toml` for modern Python packaging
+- [ ] Set up setuptools configuration
+- [ ] Create entry points for CLI commands
+- [ ] Build and test wheel distribution
+- [ ] Prepare for PyPI publication
+- [ ] Create GitHub release automation
+
+### Security Enhancements
+- [ ] Integrate keyring for secure credential storage
+- [ ] Add credential encryption options
+- [ ] Implement secure deletion of sensitive data
+- [ ] Add input sanitization
+- [ ] Create security documentation
+
+## Long Term Priority (Month 4-6)
+
+### Advanced Features
+- [ ] Implement duplicate detection using content hashing
+- [ ] Add image format conversion options
+- [ ] Create thumbnail generation
+- [ ] Implement EXIF metadata embedding
+- [ ] Add archive verification commands
+- [ ] Create HTML gallery export
+
+### Automation
+- [ ] Add cron job examples for scheduled archiving
+- [ ] Implement webhook notifications
+- [ ] Create Docker container
+- [ ] Add docker-compose configuration
+- [ ] Create systemd service files
+- [ ] Add Windows Task Scheduler integration
+
+### Cloud Storage Support
+- [ ] Add S3 backend support
+- [ ] Implement Google Cloud Storage integration
+- [ ] Add Azure Blob Storage support
+- [ ] Create abstraction layer for storage backends
+- [ ] Add sync functionality between local and cloud
+
+### Web Interface (Optional)
+- [ ] Design RESTful API for web access
+- [ ] Create basic Flask/FastAPI application
+- [ ] Implement gallery view
+- [ ] Add search functionality
+- [ ] Create download management interface
+- [ ] Add real-time progress updates
+
+## Continuous Tasks
+
+### Code Quality
+- [ ] Maintain > 80% test coverage
+- [ ] Regular dependency updates
+- [ ] Code review all changes
+- [ ] Update documentation with changes
+- [ ] Monitor and fix security vulnerabilities
+
+### Community
+- [ ] Respond to GitHub issues
+- [ ] Review and merge pull requests
+- [ ] Create contributing guidelines
+- [ ] Build example scripts and tutorials
+- [ ] Maintain changelog
+
+## Bug Fixes and Improvements
+
+### Known Issues
+- [ ] Fix hard-coded limit of 10 in main() function
+- [ ] Handle malformed JSON responses gracefully
+- [ ] Improve error messages for authentication failures
+- [ ] Fix potential path traversal vulnerabilities
+- [ ] Handle network interruptions during download
+
+### User Experience
+- [ ] Add verbose mode for debugging
+- [ ] Implement quiet mode for automation
+- [ ] Add dry-run option for testing
+- [ ] Create interactive setup wizard
+- [ ] Add command aliases for common operations
+
+## Notes
+- Prioritize backward compatibility during refactoring
+- Keep legacy scripts functional until new version is stable
+- Focus on user experience and ease of installation
+- Ensure cross-platform compatibility (Windows, macOS, Linux)
+- Consider user feedback and feature requests from GitHub issues
+</document_content>
+</document>
+
+<document index="8">
+<source>mj-download.sh</source>
+<document_content>
 #!/usr/bin/env bash
-echo "These instructions are for a Chromium-based browser"
-echo "like Chrome or Edge:"
-echo "1. Open https://www.midjourney.com/app/"
-echo "2. Sign in"
-echo "3. Open the developer tools (F12)"
-echo "4. Go to Network > Fetch/XHR"
-echo "5. Find an entry like ?user_id=NNNNNNNN&public=false"
-echo "6. Copy the NNNNNNNN value and paste it below, then press Enter:"
-read MIDJOURNEY_USER_ID
-echo "7. Go to Application > Cookies > https://www.midjourney.com"
-echo "8. Find the entry __Secure-next-auth.session-token"
-echo "9. Copy its value and paste it below, then press Enter:"
-read -e MIDJOURNEY_SESSION_TOKEN
-echo "Thanks! Now downloading..."
-./mj-metadata-archiver.py
-./mj-downloader.py
-</file>
 
-<file path="mj-downloader.py">
-#!/usr/bin/env python
-"""
-Python command line tool to download images linked from
-Midjourney metadata archive
-"""
+echo "Midjourney Archiver Setup"
+echo "-------------------------"
+echo "This script will help you download your Midjourney metadata and images."
+echo
+
+# Check for Python
+if ! command -v python &> /dev/null && ! command -v python3 &> /dev/null
+then
+    echo "Error: Python is not installed or not in your PATH."
+    echo "Please install Python 3.9 or newer and try again."
+    exit 1
+fi
+
+# Determine Python command
+PYTHON_CMD="python"
+if command -v python3 &> /dev/null
+then
+    PYTHON_CMD="python3"
+fi
+
+# Check for requests module
+if ! $PYTHON_CMD -c "import requests" &> /dev/null
+then
+    echo "Python module 'requests' not found."
+    echo "You can install it by running: pip install requests (or pip3 install requests)"
+    echo "Please install it and try again."
+    # Optionally, offer to install it:
+    # read -p "Would you like to try and install it now? (y/n): " INSTALL_REQUESTS
+    # if [[ "$INSTALL_REQUESTS" == "y" || "$INSTALL_REQUESTS" == "Y" ]]; then
+    #     $PYTHON_CMD -m pip install requests
+    #     if ! $PYTHON_CMD -c "import requests" &> /dev/null; then
+    #         echo "Installation failed. Please install 'requests' manually."
+    #         exit 1
+    #     fi
+    # else
+    #     exit 1
+    # fi
+    exit 1
+fi
+
+
+# Check for User ID in environment variables
+if [ -n "$MIDJOURNEY_USER_ID" ]; then
+    echo "Found MIDJOURNEY_USER_ID in environment variables: $MIDJOURNEY_USER_ID"
+    read -p "Do you want to use this User ID? (Y/n): " use_env_user_id
+    if [[ "$use_env_user_id" == "n" || "$use_env_user_id" == "N" ]]; then
+        unset MIDJOURNEY_USER_ID # Unset to prompt user below
+    fi
+fi
+
+# Check for Session Token in environment variables
+if [ -n "$MIDJOURNEY_SESSION_TOKEN" ]; then
+    echo "Found MIDJOURNEY_SESSION_TOKEN in environment variables."
+    read -p "Do you want to use this Session Token? (Y/n): " use_env_session_token
+    if [[ "$use_env_session_token" == "n" || "$use_env_session_token" == "N" ]]; then
+        unset MIDJOURNEY_SESSION_TOKEN # Unset to prompt user below
+    fi
+fi
+
+echo
+echo "Instructions to get your Midjourney User ID and Session Token:"
+echo "(These are generally for Chromium-based browsers like Chrome, Edge, Brave, Opera)"
+echo
+echo "1. Open your web browser and go to: https://www.midjourney.com/app/"
+echo "2. Sign in to your Midjourney account if you haven't already."
+echo "3. Open the Developer Tools. You can usually do this by pressing F12, or right-clicking"
+echo "   on the page and selecting 'Inspect' or 'Inspect Element'."
+echo
+echo "To get your User ID:"
+echo "4. In Developer Tools, go to the 'Network' tab."
+echo "5. Make sure 'Fetch/XHR' is selected as a filter (if available)."
+echo "6. Look for a request in the list that starts with 'recent-jobs?...' or similar."
+echo "   You might need to scroll or interact with the Midjourney app (e.g., click 'Archive') to trigger this request."
+echo "7. Select this request. In the 'Headers' (or 'Request') tab for this request, look at the"
+echo "   'Request URL' or 'Query String Parameters'. You should see 'user_id=YOUR_USER_ID'."
+echo "   It's a long string of letters and numbers."
+echo
+echo "To get your Session Token:"
+echo "8. In Developer Tools, go to the 'Application' tab (it might be under 'More tabs' or '>>')."
+echo "9. On the left side, under 'Storage', expand 'Cookies' and select 'https://www.midjourney.com'."
+echo "10. In the table of cookies, find the cookie named '__Secure-next-auth.session-token'."
+echo "11. Copy its entire 'Cookie Value'."
+echo
+
+# Prompt for User ID if not set from env
+if [ -z "$MIDJOURNEY_USER_ID" ]; then
+    read -p "Enter your Midjourney User ID: " MIDJOURNEY_USER_ID_INPUT
+    export MIDJOURNEY_USER_ID=$MIDJOURNEY_USER_ID_INPUT
+else
+    echo "Using User ID from environment."
+fi
+
+# Prompt for Session Token if not set from env
+if [ -z "$MIDJOURNEY_SESSION_TOKEN" ]; then
+    read -p "Enter your Midjourney Session Token: " -e MIDJOURNEY_SESSION_TOKEN_INPUT
+    export MIDJOURNEY_SESSION_TOKEN=$MIDJOURNEY_SESSION_TOKEN_INPUT
+else
+    echo "Using Session Token from environment."
+fi
+
+if [ -z "$MIDJOURNEY_USER_ID" ] || [ -z "$MIDJOURNEY_SESSION_TOKEN" ]; then
+    echo "Error: User ID and Session Token are required."
+    exit 1
+fi
+
+echo
+echo "Thanks! Credentials are set."
+echo "User ID: $MIDJOURNEY_USER_ID"
+# For security, don't echo the session token directly, just confirm it's set.
+echo "Session Token: [set]"
+echo
+
+# --- Customizable settings for the scripts ---
+ARCHIVE_ROOT_DIR="./mj-archive"
+METADATA_PAGE_LIMIT="" # Empty means no limit for metadata archiver
+METADATA_JOB_TYPE="upscale" # "upscale", "grid", "all", "None"
+METADATA_FROM_DATE="" # e.g. "2023-01-01"
+METADATA_GET_FROM_ARCHIVE="true" # "true" or "false"
+METADATA_OVERWRITE="false" # "true" or "false"
+DOWNLOADER_JOB_TYPES="upscale" # "upscale,grid", or "all" or empty for all
+LOG_LEVEL="INFO" # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+echo "Default settings for scripts:"
+echo "Archive Root: $ARCHIVE_ROOT_DIR"
+echo "Metadata - Page Limit: ${METADATA_PAGE_LIMIT:-Not set (all pages)}"
+echo "Metadata - Job Type: $METADATA_JOB_TYPE"
+echo "Metadata - From Date: ${METADATA_FROM_DATE:-Not set (newest)}"
+echo "Metadata - Get From Date From Archive: $METADATA_GET_FROM_ARCHIVE"
+echo "Metadata - Overwrite Existing: $METADATA_OVERWRITE"
+echo "Downloader - Job Types: $DOWNLOADER_JOB_TYPES"
+echo "Log Level: $LOG_LEVEL"
+echo
+read -p "Do you want to customize these settings? (y/N): " customize_settings
+
+if [[ "$customize_settings" == "y" || "$customize_settings" == "Y" ]]; then
+    read -p "Enter Archive Root Directory [$ARCHIVE_ROOT_DIR]: " temp_archive_root && ARCHIVE_ROOT_DIR=${temp_archive_root:-$ARCHIVE_ROOT_DIR}
+    read -p "Metadata - Page Limit (number, empty for no limit) [$METADATA_PAGE_LIMIT]: " temp_page_limit && METADATA_PAGE_LIMIT=${temp_page_limit:-$METADATA_PAGE_LIMIT}
+    read -p "Metadata - Job Type (upscale, grid, all) [$METADATA_JOB_TYPE]: " temp_job_type && METADATA_JOB_TYPE=${temp_job_type:-$METADATA_JOB_TYPE}
+    read -p "Metadata - From Date (YYYY-MM-DD, empty for newest) [$METADATA_FROM_DATE]: " temp_from_date && METADATA_FROM_DATE=${temp_from_date:-$METADATA_FROM_DATE}
+    read -p "Metadata - Get From Date From Archive (true/false) [$METADATA_GET_FROM_ARCHIVE]: " temp_get_from_archive && METADATA_GET_FROM_ARCHIVE=${temp_get_from_archive:-$METADATA_GET_FROM_ARCHIVE}
+    read -p "Metadata - Overwrite Existing (true/false) [$METADATA_OVERWRITE]: " temp_overwrite && METADATA_OVERWRITE=${temp_overwrite:-$METADATA_OVERWRITE}
+    read -p "Downloader - Job Types to Download (e.g., upscale,grid or all) [$DOWNLOADER_JOB_TYPES]: " temp_downloader_types && DOWNLOADER_JOB_TYPES=${temp_downloader_types:-$DOWNLOADER_JOB_TYPES}
+    read -p "Log Level (DEBUG, INFO, WARNING, ERROR) [$LOG_LEVEL]: " temp_log_level && LOG_LEVEL=${temp_log_level:-$LOG_LEVEL}
+fi
+
+# Construct arguments for mj-metadata-archiver.py
+METADATA_ARGS=()
+METADATA_ARGS+=("--archive-root" "$ARCHIVE_ROOT_DIR")
+METADATA_ARGS+=("--log-level" "$LOG_LEVEL")
+if [ -n "$METADATA_PAGE_LIMIT" ]; then METADATA_ARGS+=("--page-limit" "$METADATA_PAGE_LIMIT"); fi
+if [ -n "$METADATA_JOB_TYPE" ]; then METADATA_ARGS+=("--job-type" "$METADATA_JOB_TYPE"); fi
+if [ -n "$METADATA_FROM_DATE" ]; then METADATA_ARGS+=("--from-date" "$METADATA_FROM_DATE"); fi
+if [[ "$METADATA_GET_FROM_ARCHIVE" == "true" ]]; then METADATA_ARGS+=("--get-from-date-from-archive"); fi
+if [[ "$METADATA_OVERWRITE" == "true" ]]; then METADATA_ARGS+=("--overwrite-metadata"); fi
+
+# Construct arguments for mj-downloader.py
+DOWNLOADER_ARGS=()
+DOWNLOADER_ARGS+=("--archive-root" "$ARCHIVE_ROOT_DIR")
+DOWNLOADER_ARGS+=("--log-level" "$LOG_LEVEL")
+if [ -n "$DOWNLOADER_JOB_TYPES" ]; then DOWNLOADER_ARGS+=("--job-types-to-download" "$DOWNLOADER_JOB_TYPES"); fi
+
+
+echo
+echo "Starting metadata archiving..."
+echo "Command: $PYTHON_CMD ./mj-metadata-archiver.py ${METADATA_ARGS[@]}"
+$PYTHON_CMD ./mj-metadata-archiver.py "${METADATA_ARGS[@]}"
+ARCHIVER_EXIT_CODE=$?
+
+if [ $ARCHIVER_EXIT_CODE -ne 0 ]; then
+    echo "Metadata archiver finished with errors (exit code $ARCHIVER_EXIT_CODE)."
+    read -p "Do you want to continue to the downloader despite metadata errors? (y/N): " continue_anyway
+    if [[ "$continue_anyway" != "y" && "$continue_anyway" != "Y" ]]; then
+        echo "Exiting."
+        exit $ARCHIVER_EXIT_CODE
+    fi
+else
+    echo "Metadata archiving completed."
+fi
+
+echo
+echo "Starting image downloading..."
+echo "Command: $PYTHON_CMD ./mj-downloader.py ${DOWNLOADER_ARGS[@]}"
+$PYTHON_CMD ./mj-downloader.py "${DOWNLOADER_ARGS[@]}"
+DOWNLOADER_EXIT_CODE=$?
+
+if [ $DOWNLOADER_EXIT_CODE -ne 0 ]; then
+    echo "Downloader finished with errors (exit code $DOWNLOADER_EXIT_CODE)."
+else
+    echo "Image downloading completed."
+fi
+
+echo
+echo "All done!"
+if [ $ARCHIVER_EXIT_CODE -ne 0 ] || [ $DOWNLOADER_EXIT_CODE -ne 0 ]; then
+    echo "There were errors during the process. Please check the logs above."
+    exit 1
+else
+    echo "Process completed successfully."
+    exit 0
+fi
+
+</document_content>
+</document>
+
+# File: /Users/adam/Developer/vcs/github.twardoch/pub/midjourney-archiver/mj-downloader.py
+# Language: python
+
 import collections
 import json
 import logging
 from pathlib import Path
-
+from typing import Set
 import requests
 
-_log = logging.getLogger("mj-metadata-archiver")
-
-
 class MidjourneyDownloader:
-    def __init__(self):
-        self.stats = collections.Counter()
+    def __init__((self, job_types_to_download: Set[str])):
+    def walk_archive((self, archive_root: Path)):
+    def download_from_metadata_file((self, job_info_path: Path)):
+    def download_url((self, url: str, path: Path, job_id: str)):
 
-    def walk_archive(self, archive_root: Path):
-        for job_info_path in archive_root.glob("**/*.json"):
-            _log.info(f"Processing {job_info_path}")
-            self.download_from_metadata_file(job_info_path)
+def __init__((self, job_types_to_download: Set[str])):
 
-    def download_from_metadata_file(self, job_info_path: Path):
-        # TODO: try-except for json.loads
-        job_info = json.loads(job_info_path.read_text(encoding="utf8"))
+def walk_archive((self, archive_root: Path)):
 
-        if all(f in job_info for f in ["id", "type", "image_paths"]):
-            job_type = job_info["type"]
-            # TODO: option to decide which types/jobs to download?
-            if job_type == "upscale":
-                image_paths = job_info["image_paths"]
-                for i, image_url in enumerate(job_info["image_paths"]):
-                    extension = image_url.split(".")[-1].lower()
-                    if extension not in ["png", "jpg", "jpeg"]:
-                        raise ValueError(extension)
-                    image_index = "" if len(image_paths) == 1 else f"-{i + 1}"
-                    download_path = (
-                        job_info_path.parent
-                        / f"{job_info_path.stem}{image_index}.{extension}"
-                    )
-                    if download_path.exists():
-                        _log.info(f"Skipping, already exists: {download_path}")
-                        self.stats["skip already downloaded"] += 1
-                    else:
-                        self.download_url(image_url, download_path)
-                        self.stats["download"] += 1
-        else:
-            _log.warning(f"Skipping invalid metadata file {job_info_path}")
-            self.stats["skip invalid metadata"] += 1
+def download_from_metadata_file((self, job_info_path: Path)):
 
-    def download_url(self, url: str, path: Path):
-        _log.info(f"Downloading {path} from {url}")
-        with requests.get(url, stream=True) as response:
-            response.raise_for_status()
-            with path.open("wb") as f:
-                for chunk in response.iter_content(chunk_size=None):
-                    f.write(chunk)
-        return path
+def download_url((self, url: str, path: Path, job_id: str)):
+
+def main(()):
 
 
-def main():
-    logging.basicConfig(level=logging.INFO)
+# File: /Users/adam/Developer/vcs/github.twardoch/pub/midjourney-archiver/mj-metadata-archiver.py
+# Language: python
 
-    # TODO: real CLI user interface
-    archive_root = Path.cwd() / "mj-archive"
-
-    downloader = MidjourneyDownloader()
-    try:
-        downloader.walk_archive(archive_root=archive_root)
-    except KeyboardInterrupt:
-        _log.info("Caught KeyboardInterrupt")
-    _log.info(f"Download stats: {downloader.stats}")
-
-
-if __name__ == "__main__":
-    main()
-</file>
-
-<file path="mj-metadata-archiver.py">
-#!/usr/bin/env python
-"""
-Python command line tool to download Midjourney job metadata:
-- text file with prompt used for each job
-- JSON dump with full job metadata listing
-"""
-
+import argparse
 import collections
-
 import datetime as dt
 import itertools
 import json
@@ -201,207 +1354,65 @@ import logging
 import os
 import textwrap
 from pathlib import Path
-from typing import List, Optional, Union
-
 import requests
 
-_log = logging.getLogger("mj-metadata-archiver")
-
-
 class MidjourneyMetadataArchiver:
-    _text_wrapper = textwrap.TextWrapper(
-        width=80,
-        initial_indent=" " * 4,
-        subsequent_indent=" " * 4,
-        break_long_words=False,
-        break_on_hyphens=False,
-    )
-
-    def __init__(self, archive_root: Path, user_id: str, session_token: str):
-        self.archive_root = archive_root
-        self.user_id = user_id
-        self.session_token = session_token
-        self.stats = collections.Counter()
-
-    def request_recent_jobs(
+    def __init__((self, archive_root: Path, user_id: str, session_token: str, json_indent: int = 2)):
+    def request_recent_jobs((
         self,
-        job_type: Union[str, None] = "upscale",
-        from_date: Optional[dt.datetime] = None,
-        page: Optional[int] = None,
+        job_type: str | None = "upscale",
+        from_date: dt.datetime | None = None,
+        page: int | None = None,
         amount: int = 50,
-    ) -> List[dict]:
-        """
-        Do `recent-jobs` request to midjourney API
-        """
-        url = "https://www.midjourney.com/api/app/recent-jobs/"
-        params = {
-            "amount": amount,
-            "jobType": job_type,
-            "orderBy": "new",
-            "jobStatus": "completed",
-            "userId": self.user_id,
-            "dedupe": " true",
-            "refreshApi": 0,
-        }
-        if from_date:
-            params["fromDate"] = from_date
-        if page:
-            params["page"] = page
-        headers = {
-            "Cookie": f"__Secure-next-auth.session-token={self.session_token}",
-        }
-
-        _log.info(f"Requesting {url} with {params}")
-        resp = requests.get(url=url, params=params, headers=headers)
-        resp.raise_for_status()
-        assert resp.headers["Content-Type"].startswith("application/json")
-        job_listing = resp.json()
-        if (
-            isinstance(job_listing, list)
-            and len(job_listing) > 0
-            and isinstance(job_listing[0], dict)
-        ):
-            if all(f in job_listing[0] for f in ["id", "enqueue_time", "prompt"]):
-                _log.info(f"Got job listing with {len(job_listing)} jobs")
-                return job_listing
-            if job_listing[0] == {"msg": "No jobs found."}:
-                _log.info(f"Response: 'No jobs found'")
-                return []
-        raise ValueError(job_listing)
-
-    def crawl(
+    )) -> list[dict]:
+        """ Do `recent-jobs` request to midjourney API..."""
+    def get_latest_enqueue_time_from_archive((self)) -> Optional[str]:
+        """ Finds the latest enqueue_time from existing JSON files in the archive...."""
+    def crawl((
         self,
-        limit: Optional[int] = None,
-        job_type: Union[str, None] = "upscale",
-        from_date: Optional[str] = None,
-    ):
-        """
-        Crawl the Midjourney API to collect job metadata
-        """
-        # TODO: option to get from_date from existing archive?
-        # TODO: there seems to be a hard limit of 2500 items in total job listing
-        pages = range(1, limit + 1) if limit else itertools.count(1)
-        for page in pages:
-            _log.info(f"Crawling for job info batch {page=}")
-            job_listing = self.request_recent_jobs(
-                from_date=from_date, page=page, job_type=job_type
-            )
-            if not job_listing:
-                _log.info("Empty job listing batch: reached end of total job listing")
-                break
-            self.archive_job_listing(job_listing)
-            # TODO: option to stop crawling if listing was already fully archived
+        limit: int | None = None,
+        job_type: str | None = "upscale",
+        from_date: str | None = None,
+    )):
+        """ Crawl the Midjourney API to collect job metadata..."""
+    def archive_job_listing((self, job_listing: list[dict])):
+    def archive_job_info((self, job_info: dict, overwrite_metadata: bool)) -> bool:
 
-            # Get "fromDate" for consistent paging in next requests.
-            if from_date is None:
-                from_date = job_listing[0]["enqueue_time"]
+def __init__((self, archive_root: Path, user_id: str, session_token: str, json_indent: int = 2)):
 
-    def archive_job_listing(self, job_listing: List[dict]):
-        for job_info in job_listing:
-            self.archive_job_info(job_info)
+def request_recent_jobs((
+        self,
+        job_type: str | None = "upscale",
+        from_date: dt.datetime | None = None,
+        page: int | None = None,
+        amount: int = 50,
+    )) -> list[dict]:
+    """ Do `recent-jobs` request to midjourney API..."""
 
-    def archive_job_info(self, job_info: dict):
-        job_id = job_info["id"]
-        enqueue_time = job_info["enqueue_time"]
-        _log.info(f"Archiving metadata of job {job_id} ({enqueue_time=})")
+def get_latest_enqueue_time_from_archive((self)) -> Optional[str]:
+    """ Finds the latest enqueue_time from existing JSON files in the archive...."""
 
-        self.stats["job"] += 1
-        self.stats[f"job type={job_info['type']}"] += 1
+def crawl((
+        self,
+        limit: int | None = None,
+        job_type: str | None = "upscale",
+        from_date: str | None = None,
+    )):
+    """ Crawl the Midjourney API to collect job metadata..."""
 
-        enqueue_time = dt.datetime.strptime(enqueue_time, "%Y-%m-%d %H:%M:%S.%f")
-        job_dir = self.archive_root / enqueue_time.strftime("%Y/%Y-%m/%Y-%m-%d")
-        job_dir.mkdir(parents=True, exist_ok=True)
-        # Store raw metadata as JSON file
-        # TODO: option to not/force overwriting existing metadata files?
-        filename_base = f"{enqueue_time.strftime('%Y%m%d-%H%M%S')}_{job_id}"
-        with (job_dir / f"{filename_base}.json").open("w") as f:
-            # TODO: option to set indent/compactness?
-            json.dump(job_info, f, indent=2)
-        # Store prompt info as text file
-        with (job_dir / f"{filename_base}.prompt.txt").open("w") as f:
-            f.write("Prompt:\n")
-            f.write(self._text_wrapper.fill(job_info["prompt"]) + "\n")
-            f.write("\nFull command:\n")
-            f.write(self._text_wrapper.fill(job_info["full_command"]) + "\n")
+def archive_job_listing((self, job_listing: list[dict])):
+
+def archive_job_info((self, job_info: dict, overwrite_metadata: bool)) -> bool:
+
+def main(()):
 
 
-def main():
-    logging.basicConfig(level=logging.INFO)
-
-    # TODO: real CLI user interface
-    archive_root = Path.cwd() / "mj-archive"
-    user_id = os.environ.get("MIDJOURNEY_USER_ID") or input("user id:")
-    session_token = os.environ.get("MIDJOURNEY_SESSION_TOKEN") or input(
-        "session token:"
-    )
-
-    metadata_archiver = MidjourneyMetadataArchiver(
-        archive_root=archive_root, user_id=user_id, session_token=session_token
-    )
-    try:
-        metadata_archiver.crawl(
-            limit=10,
-            # limit=None,
-            # job_type=None,
-            job_type="upscale",
-        )
-    except KeyboardInterrupt:
-        _log.info("Caught KeyboardInterrupt")
-
-    _log.info(f"Crawling stats: {metadata_archiver.stats}")
-
-
-if __name__ == "__main__":
-    main()
-</file>
-
-<file path="README.md">
-# Midjourney Archiver
-
-This is a command line tool to download/archive your whole
-Midjourney history (images + full prompts).
-
-### Alpha software warning
-
-This is just a couple of Python scripts written in an afternoon to scratch my own itch. Here be dragons.
-
-## Installation
-
-1. Make sure you have Python 3.9 or newer.
-2. Download [the ZIP file](./archive/refs/heads/main.zip) and place it in a folder. In this folder, the tool will create an `mj-archive` subfolder, where it will place the downloaded items.
-3. Unzip the downloaded ZIP file.
-
-## Usage
-
-### Mac or Linux
-
-Run `mj-download.sh` and follow the instructions. These instructions are for a Chromium-based browser like Chrome or Edge.
-
-1. Open https://www.midjourney.com/app/
-2. Sign in
-3. Open the browser developer tools: View > Developer > Developer Tools
-4. Go to Network > Fetch/XHR
-5. Find an entry like `?user_id=NNNNNNNN&public=false`
-6. Copy the `NNNNNNNN` value and paste it when asked, then press Enter.
-7. Go to Application > Cookies > https://www.midjourney.com
-8. Find the entry `__Secure-next-auth.session-token`
-9. Copy its value and paste it when asked, then press Enter.
-
-### On Windows, or alternative on other platforms
-
-1. Get the `user_id` and `__Secure-next-auth.session-token` values as described above.
-2. Assign the value of `user_id` to the `MIDJOURNEY_USER_ID` environment variable.
-3. Assign the value of `__Secure-next-auth.session-token` to the `MIDJOURNEY_SESSION_TOKEN` environment variable.
-4. Crawl your history and download each job's metadata  as JSON file and text file with prompt: `./mj-metadata-archiver.py`
-5. Walk through that downloaded metadata archive and download the referenced images: `./mj-downloader.py`
-
-## License
-
-[MIT License](./LICENSE.txt)
-</file>
-
-<file path="requirements.txt">
+<document index="9">
+<source>requirements.txt</source>
+<document_content>
 requests
-</file>
 
-</files>
+</document_content>
+</document>
+
+</documents>
